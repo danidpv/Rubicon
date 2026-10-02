@@ -2,30 +2,27 @@
 
 Objetivo: tener una URL online para probar la web, el panel privado y `/admin` sin presentarlo aun como producto comercial.
 
-## Ruta recomendada
+## Ruta recomendada actual
 
 - GitHub privado para alojar el repositorio.
-- Railway para backend NestJS, PostgreSQL y Redis.
+- Supabase para PostgreSQL.
+- Render para backend NestJS.
 - Vercel para frontend Next.js.
 - SMTP real de pruebas: Resend, Brevo, Mailgun o similar.
 
-Esta combinacion evita meter el backend Nest/BullMQ en funciones serverless y permite usar Vercel donde mas brilla: el frontend Next.
+Redis es opcional. En staging privado puedes omitir `REDIS_URL`; el backend usara memoria temporal para limites y corregira en el mismo proceso.
 
 ## Antes de desplegar
 
-1. Hacer commit del proyecto.
-2. Subirlo a un repositorio privado de GitHub.
-3. Crear PostgreSQL en Railway.
-4. Crear Redis en Railway.
-5. Crear servicio backend en Railway desde el mismo repo.
-6. Crear proyecto frontend en Vercel apuntando a `frontend`.
-7. Configurar variables de entorno.
-8. Ejecutar migracion y seed.
-9. Crear usuario admin.
+1. Subir el repositorio a GitHub.
+2. Crear PostgreSQL en Supabase.
+3. Crear servicio backend en Render desde el mismo repo.
+4. Crear proyecto frontend en Vercel apuntando a `frontend`.
+5. Configurar variables de entorno.
+6. Ejecutar migracion y seed.
+7. Crear usuario admin.
 
-## Backend Railway
-
-Servicio: `sp-local-ia-api`.
+## Backend Render
 
 Build command:
 
@@ -47,19 +44,20 @@ DEPLOYMENT_ENV=staging
 PORT=4000
 HOST=0.0.0.0
 FRONTEND_URL=https://TU-FRONTEND.vercel.app
-DATABASE_URL=postgresql://...
-REDIS_URL=redis://...
+DATABASE_URL=postgresql://...supabase.co:5432/postgres?sslmode=require
 SESSION_COOKIE_NAME=splocal_session
-SESSION_SECRET_PEPPER=valor-largo-aleatorio
+SESSION_SECRET_PEPPER=valor-largo-aleatorio-minimo-32-caracteres
 SMTP_HOST=smtp.tu-proveedor.com
 SMTP_PORT=587
 SMTP_USER=...
 SMTP_PASSWORD=...
 EMAIL_FROM=SP Local IA <no-reply@tu-dominio.com>
 BILLING_PROVIDER=mock
-AI_PROVIDER=disabled
+AI_PROVIDER=mock
 SUPPORT_RESPONSE_HOURS=48
 ```
+
+No configures `REDIS_URL` si quieres mantener la demo simple.
 
 Para pagos hay dos caminos:
 
@@ -99,10 +97,10 @@ frontend/.next
 Variables:
 
 ```env
-BACKEND_INTERNAL_URL=https://TU-BACKEND.railway.app
+BACKEND_INTERNAL_URL=https://TU-BACKEND.onrender.com
 ```
 
-Cuando Vercel de la URL definitiva, actualizar `FRONTEND_URL` en Railway con esa URL exacta.
+Cuando Vercel de la URL definitiva, actualizar `FRONTEND_URL` en Render con esa URL exacta.
 
 ## Migracion y seed
 
@@ -127,7 +125,7 @@ El enlace llega por SMTP. Si el SMTP aun no esta listo, no crear admin hasta con
 - Verificar email.
 - Entrar a `/app`.
 - Entrar a `/admin` con el usuario admin.
-- Revisar `/api/v1/health/ready` desde el backend.
+- Revisar `/api/v1/health/ready` desde el backend. Debe mostrar `redis: disabled` si no configuraste Redis.
 - Probar crear supuesto, examen, soporte y cambio de plan.
 
 ## Nota importante

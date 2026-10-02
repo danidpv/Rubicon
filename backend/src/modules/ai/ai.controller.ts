@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { idSchema, messageSchema } from 'shared';
 import { AuthGuard, type AuthRequest } from '../../common/guards/auth.guard';
 import { db } from '../../database/prisma';
-import { redis } from '../../database/redis';
+import { incrementDaily } from '../../database/redis';
 import { env } from '../../config/env';
 import { EntitlementService } from '../subscriptions/entitlement.service';
 import { KnowledgeService } from '../knowledge/knowledge.service';
@@ -21,7 +21,7 @@ export class AiController {
     if (professional) await this.access.require(r.user.id, 'MANUAL_PROFESIONAL');
     const access = await this.access.current(r.user.id); const limit = access.free ? 3 : 50;
     const key = `ai-limit:${r.user.id}:${new Date().toISOString().slice(0, 10)}`;
-    const used = await redis.eval("local n=redis.call('INCR',KEYS[1]); if n==1 then redis.call('EXPIRE',KEYS[1],86400) end; return n", 1, key) as number;
+    const used = await incrementDaily(key);
     if (used > limit) throw new ForbiddenException({ code: 'AI_LIMIT', message: 'Has alcanzado el límite diario de consultas IA.' });
     const started = Date.now(); const sources = await this.knowledge.retrieve(body, professional); const result = await createAiProvider().chat(body, sources, professional);
     await db.$transaction([db.aiMessage.create({ data: { conversationId: id, role: 'USER', body } }), db.aiMessage.create({ data: { conversationId: id, role: 'ASSISTANT', body: result.answer, citations: result.citations } }), db.aiUsageRecord.create({ data: { userId: r.user.id, operation: c.mode, model: env.AI_PROVIDER === 'mock' ? 'mock' : env.AI_CHAT_MODEL, latencyMs: Date.now() - started, outcome: 'COMPLETED' } })]);

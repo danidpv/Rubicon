@@ -9,7 +9,7 @@ export const envSchema = z.object({
   PORT: z.coerce.number().int().min(1).max(65535).default(4000),
   HOST: z.string().min(1).default('127.0.0.1'),
   FRONTEND_URL: z.url().default('http://localhost:3000'),
-  DATABASE_URL: z.string().startsWith('postgresql://'), REDIS_URL: z.url(),
+  DATABASE_URL: z.string().startsWith('postgresql://'), REDIS_URL: z.union([z.url(), z.literal('')]).default(''),
   SESSION_COOKIE_NAME: z.string().regex(/^[a-zA-Z0-9_]+$/).default('splocal_session'),
   SESSION_SECRET_PEPPER: z.string().min(32),
   SMTP_HOST: z.string().min(1), SMTP_PORT: z.coerce.number().default(1025),

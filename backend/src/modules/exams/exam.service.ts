@@ -6,11 +6,13 @@ import { ContentService, makeSnapshot, publicData } from '../theory/content.serv
 import { EntitlementService } from '../subscriptions/entitlement.service';
 import { scoreMcq } from '../practical-cases/scoring';
 import { evaluationQueue } from '../practical-cases/attempt.service';
+import { KnowledgeService } from '../knowledge/knowledge.service';
+import { evaluateExam } from '../../jobs/exam-evaluation';
 import { readExamAnswers } from './exam-answers';
 export function canSaveExam(status: string, expiresAt: Date, now = new Date()) { return status === 'DRAFT' && expiresAt > now; }
 @Injectable()
 export class ExamService {
-  constructor(@Inject(ContentService) private readonly content: ContentService, @Inject(EntitlementService) private readonly access: EntitlementService) {}
+  constructor(@Inject(ContentService) private readonly content: ContentService, @Inject(EntitlementService) private readonly access: EntitlementService, @Inject(KnowledgeService) private readonly knowledge: KnowledgeService) {}
   async template(id: string, userId: string) { const c = await db.content.findFirst({ where: { id, kind: 'EXAM', status: 'PUBLISHED' } }); if (!c) throw new NotFoundException(); await this.access.require(userId, 'SUPUESTOS'); return { ...c, data: publicData(c.data) }; }
   async start(id: string, userId: string) {
     await this.template(id, userId); const c = await db.content.findUniqueOrThrow({ where: { id } });
@@ -45,7 +47,10 @@ export class ExamService {
       for (const q of result.details.filter(q => !q.isCorrect)) await tx.errorBankItem.upsert({ where: { userId_concept: { userId, concept: q.concept } }, create: { userId, concept: q.concept, category: snapshot.category, originId: a.contentId, action: q.recommendation, severity: 'ERROR', nextReview: new Date(Date.now() + 2 * 86400000) }, update: { count: { increment: 1 }, status: 'ACTIVE', lastAt: new Date(), nextReview: new Date(Date.now() + 2 * 86400000) } });
       return { id, status: 'COMPLETED' };
     });
-    if (outcome.status === 'QUEUED') await evaluationQueue.add('evaluate-exam', { attemptId: id, target: 'EXAM' }, { jobId: `exam-${id}`, attempts: 2, backoff: { type: 'exponential', delay: 2000 }, removeOnComplete: 500 });
+    if (outcome.status === 'QUEUED') {
+      if (evaluationQueue) await evaluationQueue.add('evaluate-exam', { attemptId: id, target: 'EXAM' }, { jobId: `exam-${id}`, attempts: 2, backoff: { type: 'exponential', delay: 2000 }, removeOnComplete: 500 });
+      else { await evaluateExam(id, this.knowledge); return { id, status: 'COMPLETED' }; }
+    }
     return outcome;
   }
 }

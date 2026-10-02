@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { createHash, randomBytes } from 'node:crypto';
 import { db } from '../../database/prisma';
-import { redis } from '../../database/redis';
+import { cacheDel, cacheSet } from '../../database/redis';
 import { env } from '../../config/env';
 import type { User } from '../../generated/prisma/client';
 export const SESSION_ABSOLUTE_MS = 7 * 86400000;
@@ -14,7 +14,7 @@ export class SessionService {
   async create(userId: string) {
     const token = randomBytes(32).toString('hex');
     const session = await db.authSession.create({ data: { userId, tokenHash: digest(token), expiresAt: new Date(Date.now() + SESSION_ABSOLUTE_MS) } });
-    await redis.set(`session:${session.tokenHash}`, JSON.stringify({ id: session.id, userId }), 'EX', 300);
+    await cacheSet(`session:${session.tokenHash}`, JSON.stringify({ id: session.id, userId }), 300);
     await db.user.update({ where: { id: userId }, data: { lastAccessAt: new Date() } });
     return token;
   }
@@ -26,7 +26,7 @@ export class SessionService {
     // DB authority on every request means cached records cannot resurrect revoked users.
     if (Date.now() - session.lastSeenAt.getTime() > 60000) {
       await db.authSession.updateMany({ where: { id: session.id, revokedAt: null }, data: { lastSeenAt: new Date() } });
-      await redis.set(`session:${tokenHash}`, JSON.stringify({ id: session.id, userId: session.userId }), 'EX', 300);
+      await cacheSet(`session:${tokenHash}`, JSON.stringify({ id: session.id, userId: session.userId }), 300);
     }
     return { user: session.user, sessionId: session.id };
   }
@@ -34,6 +34,6 @@ export class SessionService {
     const where = { userId, ...(exceptId ? { id: { not: exceptId } } : {}) };
     const sessions = await db.authSession.findMany({ where, select: { tokenHash: true } });
     await db.authSession.updateMany({ where, data: { revokedAt: new Date() } });
-    if (sessions.length) await redis.del(...sessions.map(s => `session:${s.tokenHash}`));
+    await cacheDel(sessions.map(s => `session:${s.tokenHash}`));
   }
 }

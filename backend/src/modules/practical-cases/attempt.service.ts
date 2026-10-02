@@ -5,11 +5,13 @@ import { db } from '../../database/prisma';
 import { queueConnection } from '../../database/redis';
 import { ContentService, makeSnapshot, publicData } from '../theory/content.service';
 import { EntitlementService } from '../subscriptions/entitlement.service';
+import { KnowledgeService } from '../knowledge/knowledge.service';
+import { evaluateCaseAttempt } from '../../jobs/case-evaluation';
 import { scoreMcq } from './scoring';
-export const evaluationQueue = new Queue('case-evaluation', { connection: queueConnection });
+export const evaluationQueue = queueConnection ? new Queue('case-evaluation', { connection: queueConnection }) : null;
 @Injectable()
 export class AttemptService {
-  constructor(@Inject(ContentService) private readonly content: ContentService, @Inject(EntitlementService) private readonly access: EntitlementService) {}
+  constructor(@Inject(ContentService) private readonly content: ContentService, @Inject(EntitlementService) private readonly access: EntitlementService, @Inject(KnowledgeService) private readonly knowledge: KnowledgeService) {}
   async create(slug: string, userId: string) {
     const visible = await this.content.get('CASE', slug, userId);
     const content = await db.content.findUniqueOrThrow({ where: { id: visible.id } });
@@ -47,7 +49,12 @@ export class AttemptService {
     }
     if (a.answer.trim().length < 30) throw new BadRequestException({ code: 'ANSWER_TOO_SHORT', message: 'Escribe al menos 30 caracteres antes de entregar.' });
     const claimed = await db.caseAttempt.updateMany({ where: { id, userId, status: 'DRAFT' }, data: { status: 'QUEUED', submittedAt: new Date() } });
-    if (claimed.count) await evaluationQueue.add('evaluate', { attemptId: id }, { jobId: id, attempts: 2, backoff: { type: 'exponential', delay: 2000 }, removeOnComplete: 500, removeOnFail: 500 });
-    return { id, status: 'QUEUED' };
+    if (!claimed.count) return { id, status: 'QUEUED' };
+    if (evaluationQueue) {
+      await evaluationQueue.add('evaluate', { attemptId: id }, { jobId: id, attempts: 2, backoff: { type: 'exponential', delay: 2000 }, removeOnComplete: 500, removeOnFail: 500 });
+      return { id, status: 'QUEUED' };
+    }
+    await evaluateCaseAttempt(id, this.knowledge);
+    return { id, status: 'COMPLETED' };
   }
 }
