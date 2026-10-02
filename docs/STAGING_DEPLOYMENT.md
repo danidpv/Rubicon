@@ -43,6 +43,7 @@ Variables necesarias:
 
 ```env
 NODE_ENV=production
+DEPLOYMENT_ENV=staging
 PORT=4000
 HOST=0.0.0.0
 FRONTEND_URL=https://TU-FRONTEND.vercel.app
@@ -55,16 +56,17 @@ SMTP_PORT=587
 SMTP_USER=...
 SMTP_PASSWORD=...
 EMAIL_FROM=SP Local IA <no-reply@tu-dominio.com>
+BILLING_PROVIDER=mock
 AI_PROVIDER=disabled
 SUPPORT_RESPONSE_HOURS=48
 ```
 
 Para pagos hay dos caminos:
 
+- Staging rapido sin pagos reales: `DEPLOYMENT_ENV=staging` y `BILLING_PROVIDER=mock`.
 - Staging con Stripe test: `BILLING_PROVIDER=stripe` y claves de prueba.
-- Staging privado sin pagos reales: requiere adaptar el backend para permitir mock billing solo en un modo privado controlado.
 
-La segunda opcion es comoda para demo, pero no debe usarse en publico.
+El modo mock solo debe usarse en staging privado. Para publicar de verdad, usar `DEPLOYMENT_ENV=production` con Stripe real o test segun corresponda.
 
 ## Frontend Vercel
 

@@ -5,6 +5,7 @@ config({ path: resolve(process.cwd(), '../.env'), quiet: true });
 config({ path: resolve(process.cwd(), '.env'), quiet: true });
 export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  DEPLOYMENT_ENV: z.enum(['local', 'staging', 'production']).default('local'),
   PORT: z.coerce.number().int().min(1).max(65535).default(4000),
   HOST: z.string().min(1).default('127.0.0.1'),
   FRONTEND_URL: z.url().default('http://localhost:3000'),
@@ -18,7 +19,7 @@ export const envSchema = z.object({
   SUPPORT_RESPONSE_HOURS: z.coerce.number().min(1).default(48)
 }).superRefine((v, ctx) => {
   if (v.BILLING_PROVIDER === 'stripe' && (!v.STRIPE_SECRET_KEY || !v.STRIPE_WEBHOOK_SECRET)) ctx.addIssue({ code: 'custom', message: 'Stripe requiere claves y secreto webhook' });
-  if (v.AI_PROVIDER === 'real' && (!v.AI_API_KEY || !v.AI_BASE_URL || !v.AI_CHAT_MODEL || !v.AI_EVALUATION_MODEL)) ctx.addIssue({ code: 'custom', message: 'Falta configuración de IA real' });
-  if (v.NODE_ENV === 'production' && (v.BILLING_PROVIDER === 'mock' || v.AI_PROVIDER === 'mock' || !v.FRONTEND_URL.startsWith('https://'))) ctx.addIssue({ code: 'custom', message: 'Producción exige HTTPS y proveedores explícitos reales/deshabilitados' });
+  if (v.AI_PROVIDER === 'real' && (!v.AI_API_KEY || !v.AI_BASE_URL || !v.AI_CHAT_MODEL || !v.AI_EVALUATION_MODEL)) ctx.addIssue({ code: 'custom', message: 'Falta configuracion de IA real' });
+  if (v.NODE_ENV === 'production' && (!v.FRONTEND_URL.startsWith('https://') || (v.DEPLOYMENT_ENV === 'production' && (v.BILLING_PROVIDER === 'mock' || v.AI_PROVIDER === 'mock')))) ctx.addIssue({ code: 'custom', message: 'Production requires HTTPS; DEPLOYMENT_ENV=production requires explicit real/disabled providers' });
 });
 export const env = envSchema.parse(process.env);
