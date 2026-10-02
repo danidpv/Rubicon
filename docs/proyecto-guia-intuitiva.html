@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Guia intuitiva - SP Local IA</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #14213d;
+        --muted: #536171;
+        --paper: #ffffff;
+        --line: #d9e2ec;
+        --blue: #1d4ed8;
+        --green: #047857;
+        --amber: #b45309;
+        --red: #b91c1c;
+        --soft-blue: #eef5ff;
+        --soft-green: #edfdf7;
+        --soft-amber: #fff7ed;
+        --soft-red: #fef2f2;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: #f5f7fb;
+        color: var(--ink);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        font-size: 12.5px;
+        line-height: 1.45;
+      }
+
+      main {
+        width: 190mm;
+        margin: 0 auto;
+        padding: 9mm 0;
+      }
+
+      section {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        margin-bottom: 5mm;
+        padding: 6mm;
+        page-break-inside: avoid;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: 28px;
+        line-height: 1.05;
+        letter-spacing: 0;
+      }
+
+      h2 {
+        font-size: 18px;
+        margin-bottom: 3mm;
+      }
+
+      h3 {
+        font-size: 13.5px;
+        margin-bottom: 1.5mm;
+      }
+
+      p + p {
+        margin-top: 2.2mm;
+      }
+
+      .hero {
+        background: linear-gradient(135deg, #ffffff 0%, #eef5ff 100%);
+        display: grid;
+        grid-template-columns: 1.4fr 0.9fr;
+        gap: 7mm;
+        align-items: center;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        border: 1px solid #b8cdf7;
+        background: #ffffff;
+        color: var(--blue);
+        border-radius: 999px;
+        padding: 1.5mm 3mm;
+        font-weight: 700;
+        margin-bottom: 3mm;
+      }
+
+      .hero-card {
+        border: 1px solid #c9d8f5;
+        border-radius: 8px;
+        padding: 5mm;
+        background: #ffffff;
+      }
+
+      .grid {
+        display: grid;
+        gap: 3mm;
+      }
+
+      .grid.two {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .grid.three {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .box {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 4mm;
+        background: #ffffff;
+      }
+
+      .blue {
+        background: var(--soft-blue);
+        border-color: #c7d7fe;
+      }
+
+      .green {
+        background: var(--soft-green);
+        border-color: #bbf7d0;
+      }
+
+      .amber {
+        background: var(--soft-amber);
+        border-color: #fed7aa;
+      }
+
+      .red {
+        background: var(--soft-red);
+        border-color: #fecaca;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .route {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 2.5mm;
+      }
+
+      .step {
+        min-height: 30mm;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 3.5mm;
+        background: #ffffff;
+      }
+
+      .num {
+        display: inline-grid;
+        place-items: center;
+        width: 7mm;
+        height: 7mm;
+        border-radius: 99px;
+        background: var(--blue);
+        color: white;
+        font-weight: 800;
+        margin-bottom: 2mm;
+      }
+
+      .flow {
+        display: grid;
+        grid-template-columns: 1fr 8mm 1fr 8mm 1fr;
+        align-items: center;
+        gap: 2mm;
+      }
+
+      .arrow {
+        text-align: center;
+        color: var(--blue);
+        font-size: 18px;
+        font-weight: 800;
+      }
+
+      .mini {
+        font-size: 11.5px;
+      }
+
+      ul {
+        margin: 2mm 0 0;
+        padding-left: 5mm;
+      }
+
+      li + li {
+        margin-top: 1mm;
+      }
+
+      code {
+        background: #edf2f7;
+        border-radius: 4px;
+        padding: 0.4mm 1mm;
+        font-family: "Cascadia Code", Consolas, monospace;
+        font-size: 11px;
+      }
+
+      .footer {
+        color: var(--muted);
+        font-size: 10.5px;
+        text-align: center;
+        margin-top: 4mm;
+      }
+
+      @media print {
+        body {
+          background: #ffffff;
+        }
+
+        main {
+          padding: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="hero">
+        <div>
+          <div class="tag">Guia rapida de aprendizaje</div>
+          <h1>SP Local IA por dentro</h1>
+          <p class="muted" style="margin-top: 3mm">
+            Una explicacion corta, intuitiva y divertida de como esta montada la
+            aplicacion web local que acabas de probar.
+          </p>
+        </div>
+        <div class="hero-card">
+          <h3>Idea central</h3>
+          <p>
+            Piensa en el proyecto como una academia digital con tres equipos:
+            la pantalla que ves, el cerebro que decide y la caja fuerte donde se
+            guardan los datos.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <h2>1. El mapa del edificio</h2>
+        <div class="grid three">
+          <div class="box blue">
+            <h3><code>frontend</code></h3>
+            <p>
+              Es el mostrador de la academia. Aqui viven las pantallas,
+              formularios, panel del alumno, admin, temario, supuestos,
+              examenes, soporte y cuenta.
+            </p>
+          </div>
+          <div class="box green">
+            <h3><code>backend</code></h3>
+            <p>
+              Es la direccion del centro. Valida usuarios, sesiones, permisos,
+              planes, intentos, correcciones, soporte, pagos simulados e IA.
+            </p>
+          </div>
+          <div class="box amber">
+            <h3><code>shared</code></h3>
+            <p>
+              Es el diccionario comun. Guarda contratos Zod para que frontend y
+              backend hablen el mismo idioma y no se pasen datos raros.
+            </p>
+          </div>
+        </div>
+        <div class="grid three" style="margin-top: 3mm">
+          <div class="box">
+            <h3><code>infra</code></h3>
+            <p>Scripts para levantar entorno local, WSL, variables y pruebas.</p>
+          </div>
+          <div class="box">
+            <h3><code>docs</code></h3>
+            <p>Documentacion tecnica: arquitectura, seguridad, IA, billing y despliegue.</p>
+          </div>
+          <div class="box">
+            <h3><code>tests</code></h3>
+            <p>Pruebas de navegador que comprueban que los flujos importantes funcionan.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>2. Como viaja una accion</h2>
+        <div class="flow">
+          <div class="box blue">
+            <h3>Alumno</h3>
+            <p class="mini">Pulsa, responde, estudia o envia un supuesto.</p>
+          </div>
+          <div class="arrow">></div>
+          <div class="box green">
+            <h3>API Nest</h3>
+            <p class="mini">Comprueba sesion, permisos, plan y reglas del negocio.</p>
+          </div>
+          <div class="arrow">></div>
+          <div class="box amber">
+            <h3>Datos</h3>
+            <p class="mini">PostgreSQL guarda lo serio; Redis acelera sesiones, limites y colas.</p>
+          </div>
+        </div>
+        <p class="muted" style="margin-top: 3mm">
+          Truco mental: la pantalla pide, el backend decide, la base de datos recuerda.
+        </p>
+      </section>
+
+      <section>
+        <h2>3. Funcionalidad principal</h2>
+        <div class="grid two">
+          <div class="box">
+            <h3>Alumno</h3>
+            <ul>
+              <li>Registro, verificacion por correo, login y cuenta.</li>
+              <li>Planes de prueba sin cobro real.</li>
+              <li>Temario, supuestos practicos, examenes y progreso.</li>
+              <li>Banco de errores, manual, tutor IA y soporte.</li>
+            </ul>
+          </div>
+          <div class="box">
+            <h3>Admin y soporte</h3>
+            <ul>
+              <li>Gestion de usuarios, roles, suspensiones y auditoria.</li>
+              <li>Revision de contenido, fuentes y versiones.</li>
+              <li>Mensajes de soporte con notas privadas.</li>
+              <li>Planes, suscripciones y derechos manuales.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>4. Organizacion del backend</h2>
+        <div class="grid three">
+          <div class="box green">
+            <h3>Modulos</h3>
+            <p>
+              Cada area vive en su modulo: <code>auth</code>, <code>exams</code>,
+              <code>progress</code>, <code>support</code>, <code>admin</code>,
+              <code>ai</code>, <code>manual</code> y mas.
+            </p>
+          </div>
+          <div class="box green">
+            <h3>Prisma</h3>
+            <p>
+              <code>schema.prisma</code> define las tablas. Las migraciones
+              crean la base y el seed mete contenido demo.
+            </p>
+          </div>
+          <div class="box green">
+            <h3>Trabajos</h3>
+            <p>
+              BullMQ permite corregir tareas en segundo plano, recuperar trabajos
+              pendientes y no bloquear la web.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>5. Organizacion del frontend</h2>
+        <div class="grid three">
+          <div class="box blue">
+            <h3><code>app</code></h3>
+            <p>Rutas de Next: publicas, privadas, admin y paginas concretas.</p>
+          </div>
+          <div class="box blue">
+            <h3><code>features</code></h3>
+            <p>Piezas grandes por funcionalidad: auth, casos, examenes, progreso, billing.</p>
+          </div>
+          <div class="box blue">
+            <h3><code>components</code></h3>
+            <p>Componentes reutilizables: layout, UI comun y bloques de evaluacion.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>6. Ruta para aprenderlo en 30 minutos</h2>
+        <div class="route">
+          <div class="step">
+            <div class="num">1</div>
+            <h3>Entra</h3>
+            <p class="mini">Abre <code>README.md</code> y entiende como se arranca.</p>
+          </div>
+          <div class="step">
+            <div class="num">2</div>
+            <h3>Mira la fachada</h3>
+            <p class="mini">Explora <code>frontend/src/app</code> y localiza cada pantalla.</p>
+          </div>
+          <div class="step">
+            <div class="num">3</div>
+            <h3>Busca el cerebro</h3>
+            <p class="mini">Entra en <code>backend/src/modules</code> y asocia modulo con menu.</p>
+          </div>
+          <div class="step">
+            <div class="num">4</div>
+            <h3>Abre la caja fuerte</h3>
+            <p class="mini">Lee <code>backend/prisma/schema.prisma</code> para ver las tablas.</p>
+          </div>
+          <div class="step">
+            <div class="num">5</div>
+            <h3>Comprueba</h3>
+            <p class="mini">Mira <code>tests/e2e</code>: ahi estan los recorridos reales.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>7. Mini juego mental: quien hace que?</h2>
+        <div class="grid two">
+          <div class="box red">
+            <h3>Si algo se ve mal...</h3>
+            <p>
+              Mira primero <code>frontend/src/app</code>, <code>features</code> o
+              <code>components</code>. Es probable que sea pantalla, estilos o datos pintados.
+            </p>
+          </div>
+          <div class="box amber">
+            <h3>Si algo se guarda mal...</h3>
+            <p>
+              Mira <code>backend/src/modules</code> y despues Prisma. Es probable
+              que sea una regla, permiso, validacion o escritura en base de datos.
+            </p>
+          </div>
+        </div>
+        <div class="grid two" style="margin-top: 3mm">
+          <div class="box blue">
+            <h3>Si frontend y backend no se entienden...</h3>
+            <p>Mira <code>shared/src/schemas</code>. Es el contrato entre ambos.</p>
+          </div>
+          <div class="box green">
+            <h3>Si quieres saber si funciona...</h3>
+            <p>
+              Ejecuta <code>pnpm test</code>, <code>pnpm build</code> y
+              <code>pnpm test:e2e</code>.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>8. Lo importante que debes recordar</h2>
+        <div class="grid two">
+          <div class="box">
+            <h3>Estado actual</h3>
+            <p>
+              Es una version local funcional: puedes registrarte, estudiar,
+              practicar, hacer examenes, ver progreso, usar soporte y probar
+              planes sin cobro.
+            </p>
+          </div>
+          <div class="box">
+            <h3>Limites sanos</h3>
+            <p>
+              La IA y los pagos estan simulados para la demo local. Para
+              produccion faltan claves reales, revision juridica, textos legales
+              definitivos y despliegue publico.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <p class="footer">
+        SP Local IA - guia breve del proyecto generada desde la estructura real
+        del repositorio.
+      </p>
+    </main>
+  </body>
+</html>

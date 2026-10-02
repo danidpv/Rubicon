@@ -1,0 +1,14 @@
+packages:
+  - frontend
+  - backend
+  - shared
+onlyBuiltDependencies:
+  - '@prisma/engines'
+  - prisma
+  - argon2
+  - esbuild
+  - sharp
+overrides:
+  lodash: 4.18.1
+  deepmerge-ts: 8.0.2
+  mysql2: 3.24.4

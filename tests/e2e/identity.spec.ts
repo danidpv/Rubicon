@@ -1,0 +1,22 @@
+import { test, expect } from '@playwright/test';
+import { randomBytes } from 'node:crypto';
+test('registro, correo real en Mailpit, verificación, sesión y cierre', async ({ playwright }) => {
+  const api = await playwright.request.newContext({ baseURL: 'http://localhost:4000/api/v1/', extraHTTPHeaders: { Origin: 'http://localhost:3000' } });
+  const suffix = randomBytes(6).toString('hex'); const email = `test_${suffix}@example.test`; const password = randomBytes(20).toString('hex');
+  const register = await api.post('auth/register', { data: { name: 'Prueba E2E', username: `test_${suffix}`, email, password, terms: true, privacy: true } });
+  expect(register.status()).toBe(201);
+  expect((await api.post('auth/login', { data: { identifier: email, password } })).status()).toBe(403);
+  const mail = await playwright.request.newContext({ baseURL: 'http://localhost:8025' });
+  const inbox = await mail.get(`/api/v1/search?query=${encodeURIComponent(`to:${email}`)}`);
+  const messages = await inbox.json() as { messages: { ID: string }[] };
+  expect(messages.messages.length).toBeGreaterThan(0);
+  const message = await (await mail.get(`/api/v1/message/${messages.messages[0].ID}`)).json() as { Text: string };
+  const token = message.Text.match(/token=([a-f0-9]{64})/)?.[1]; expect(token).toBeTruthy();
+  expect((await api.post('auth/verify-email', { data: { token } })).status()).toBe(201);
+  const login = await api.post('auth/login', { data: { identifier: email.toUpperCase(), password } }); expect(login.ok()).toBeTruthy();
+  expect(login.headers()['set-cookie']).toContain('HttpOnly');
+  const me = await api.get('auth/me'); expect(me.ok()).toBeTruthy(); expect(await me.text()).not.toContain('passwordHash');
+  expect((await api.post('auth/logout')).ok()).toBeTruthy();
+  expect((await api.get('auth/me')).status()).toBe(401);
+  await api.dispose(); await mail.dispose();
+});

@@ -1,0 +1,3 @@
+import Link from 'next/link';
+import { Brand } from '../ui/common';
+export function PublicShell({ children }: { children: React.ReactNode }) { return <><a className="skip-link" href="#contenido">Saltar al contenido</a><header className="public-header"><Brand /><nav aria-label="Navegación pública"><Link href="/como-funciona">El método</Link><Link href="/tarifas">Tarifas</Link><Link href="/login">Iniciar sesión</Link><Link href="/registro" className="button small">Empieza gratis</Link></nav></header><main id="contenido">{children}</main><footer className="public-footer"><span>SP Local IA · Supuestos prácticos de Policía Local</span><div><Link href="/legal/privacidad">Privacidad</Link><Link href="/legal/terminos">Términos</Link></div></footer></>; }

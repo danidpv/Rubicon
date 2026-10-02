@@ -1,0 +1,3 @@
+import { PublicShell } from './public-shell';
+import { AuthForm } from '../../features/auth/auth-form';
+export function AuthPage({ mode, title, subtitle }: { mode: 'login' | 'registro' | 'recuperar-password' | 'verificar-email'; title: string; subtitle: string }) { return <PublicShell><div className="auth-page"><section className="auth-intro"><p className="eyebrow">CADA CASO, UN PASO ADELANTE</p><h1>Tu criterio se<br />construye practicando.</h1><p>Un espacio para aprender a resolver, comprender tus errores y volver a intentarlo.</p><span className="auth-rule">Hechos. Fundamento. Actuación. Garantías.</span></section><section className="auth-card"><h2>{title}</h2><p className="muted">{subtitle}</p><AuthForm mode={mode} /></section></div></PublicShell>; }

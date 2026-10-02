@@ -1,0 +1,381 @@
+generator client {
+  provider = "prisma-client"
+  output = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+datasource db {
+  provider = "postgresql"
+}
+enum Role {
+  USER
+  SUPPORT
+  CONTENT_EDITOR
+  ADMIN
+  SUPERADMIN
+}
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DISABLED
+}
+enum ContentKind {
+  THEORY
+  CASE
+  EXAM
+  MANUAL
+}
+enum EditorialStatus {
+  DRAFT
+  REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+enum AttemptStatus {
+  DRAFT
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+model User {
+  id String @id @default(uuid()) @db.Uuid @map("PK_USUARIO")
+  email String @unique @map("COD_EMAIL")
+  username String @unique @map("COD_USERNAME")
+  name String @map("DES_NOMBRE")
+  passwordHash String @map("COD_PASSWORD_HASH")
+  role Role @default(USER) @map("COD_ROL")
+  status UserStatus @default(ACTIVE) @map("DES_ESTADO")
+  verifiedAt DateTime? @map("TS_VERIFICACION")
+  termsAt DateTime @default(now()) @map("TS_CONSENTIMIENTO")
+  profile Json @default("{}") @map("TXT_PERFIL")
+  createdAt DateTime @default(now()) @map("TS_CREACION")
+  lastAccessAt DateTime? @map("TS_ULTIMO_ACCESO")
+  sessions AuthSession[]
+  tokens AuthToken[]
+  subscription Subscription?
+  entitlements ManualEntitlement[]
+  attempts CaseAttempt[]
+  exams ExamAttempt[]
+  skills UserSkillProgress[]
+  errors ErrorBankItem[]
+  studies StudySession[]
+  threads SupportThread[]
+  conversations AiConversation[]
+  favorites Favorite[]
+  @@index([status, createdAt])
+  @@map("T_PLA_D_USUARIO")
+}
+model AuthSession {
+  id String @id @default(uuid()) @db.Uuid @map("PK_SESION")
+  userId String @db.Uuid @map("FK_USUARIO")
+  user User @relation(fields: [userId], references: [id])
+  tokenHash String @unique @map("COD_TOKEN_HASH")
+  createdAt DateTime @default(now()) @map("TS_CREACION")
+  expiresAt DateTime @map("TS_EXPIRACION")
+  lastSeenAt DateTime @default(now()) @map("TS_ULTIMO_USO")
+  revokedAt DateTime? @map("TS_REVOCACION")
+  @@index([userId, revokedAt])
+  @@map("T_PLA_F_SESION_AUTENTICACION")
+}
+model AuthToken {
+  id String @id @default(uuid()) @db.Uuid @map("PK_TOKEN")
+  userId String @db.Uuid @map("FK_USUARIO")
+  user User @relation(fields: [userId], references: [id])
+  tokenHash String @unique @map("COD_TOKEN_HASH")
+  purpose String @map("COD_FINALIDAD")
+  expiresAt DateTime @map("TS_EXPIRACION")
+  consumedAt DateTime? @map("TS_CONSUMO")
+  @@index([userId, purpose])
+  @@map("T_PLA_F_TOKEN_AUTENTICACION")
+}
+model Plan {
+  id String @id @default(uuid()) @db.Uuid @map("PK_PLAN")
+  code String @unique @map("COD_PLAN")
+  name String @map("DES_NOMBRE")
+  priceCents Int @map("IMP_PRECIO")
+  modules String[] @map("COD_MODULOS")
+  active Boolean @default(true) @map("FLG_ACTIVO")
+  subscriptions Subscription[]
+  @@map("T_PLA_D_PLAN")
+}
+model Subscription {
+  id String @id @default(uuid()) @db.Uuid @map("PK_SUSCRIPCION")
+  userId String @unique @db.Uuid @map("FK_USUARIO")
+  user User @relation(fields: [userId], references: [id])
+  planId String @db.Uuid @map("FK_PLAN")
+  plan Plan @relation(fields: [planId], references: [id])
+  status String @default("ACTIVE") @map("DES_ESTADO")
+  provider String @map("COD_PROVEEDOR")
+  customerId String? @unique @map("COD_CLIENTE_EXTERNO")
+  externalId String? @unique @map("COD_SUSCRIPCION_EXTERNA")
+  currentPeriodEnd DateTime? @map("TS_FIN_PERIODO")
+  providerEventAt DateTime? @map("TS_EVENTO_PROVEEDOR")
+  updatedAt DateTime @updatedAt @map("TS_ACTUALIZACION")
+  @@index([userId, status])
+  @@map("T_PLA_F_SUSCRIPCION")
+}
+model ManualEntitlement {
+  id String @id @default(uuid()) @db.Uuid @map("PK_ACCESO")
+  userId String @db.Uuid @map("FK_USUARIO")
+  user User @relation(fields: [userId], references: [id])
+  module String @map("COD_MODULO")
+  expiresAt DateTime? @map("TS_EXPIRACION")
+  revokedAt DateTime? @map("TS_REVOCACION")
+  createdAt DateTime @default(now()) @map("TS_CREACION")
+  @@index([userId, module, revokedAt])
+  @@map("T_PLA_F_ACCESO_MANUAL")
+}
+model BillingEvent {
+  id String @id @default(uuid()) @db.Uuid @map("PK_EVENTO")
+  providerEventId String @unique @map("COD_EVENTO_PROVEEDOR")
+  type String @map("COD_TIPO")
+  createdAt DateTime @default(now()) @map("TS_CREACION")
+  @@map("T_PLA_F_EVENTO_FACTURACION")
+}
+model Content {
+  id String @id @default(uuid()) @db.Uuid @map("PK_CONTENIDO")
+  kind ContentKind @map("COD_TIPO")
+  slug String @unique @map("COD_SLUG")
+  title String @map("DES_TITULO")
+  summary String @map("DES_RESUMEN")
+  category String @map("COD_CATEGORIA")
+  format String @default("DEVELOPMENT") @map("COD_FORMATO")
+  difficulty Int @default(1) @map("NUM_DIFICULTAD")
+  minutes Int @default(15) @map("NUM_MINUTOS")
+  status EditorialStatus @default(DRAFT) @map("DES_ESTADO")
+  version Int @default(1) @map("NUM_VERSION")
+  body String @map("TXT_CONTENIDO")
+  data Json @map("TXT_DATOS")
+  isDemo Boolean @default(true) @map("FLG_DEMO")
+  free Boolean @default(false) @map("FLG_GRATIS")
+  contentOrigin String @default("ORIGINAL") @map("COD_ORIGEN")
+  sourceAttribution String @map("DES_ATRIBUCION")
+  reviewerId String? @db.Uuid @map("FK_REVISOR")
+  reviewedAt DateTime? @map("TS_REVISION")
+  validTo DateTime? @map("TD_FECHA_VIGENCIA")
+  createdAt DateTime @default(now()) @map("TS_CREACION")
+  updatedAt DateTime @updatedAt @map("TS_ACTUALIZACION")
+  revisions ContentRevision[]
+  sources ContentSource[]
+  attempts CaseAttempt[]
+  exams ExamAttempt[]
+  studies StudySession[]
+  favorites Favorite[]
+  @@index([kind, status, category])
+  @@map("T_PLA_D_CONTENIDO")
+}
+model ContentRevision {
+  id String @id @default(uuid()) @db.Uuid @map("PK_REVISION")
+  contentId String @db.Uuid @map("FK_CONTENIDO")
+  content Content @relation(fields: [contentId], references: [id])
+  version Int @map("NUM_VERSION")
+  snapshot Json @map("TXT_SNAPSHOT")
+  createdAt DateTime @default(now()) @map("TS_CREACION")
+  @@unique([contentId, version])
+  @@map("T_PLA_F_REVISION_CONTENIDO")
+}
+model KnowledgeSource {
+  id String @id @default(uuid()) @db.Uuid @map("PK_FUENTE")
+  title String @map("DES_TITULO")
+  url String @map("COD_URL")
+  reference String @unique @map("COD_REFERENCIA")
+  type String @map("COD_TIPO")
+  authority String @map("DES_ORGANISMO")
+  jurisdiction String @map("DES_JURISDICCION")
+  status String @default("REVIEW") @map("DES_ESTADO")
+  version Int @default(1) @map("NUM_VERSION")
+  validFrom DateTime? @map("TD_INICIO_VIGENCIA")
+  validTo DateTime? @map("TD_FIN_VIGENCIA")
+  reviewedAt DateTime? @map("TS_REVISION")
+  reviewerId String? @db.Uuid @map("FK_REVISOR")
+  checksum String @map("COD_CHECKSUM")
+  body String @map("TXT_CONTENIDO")
+  chunks KnowledgeChunk[]
+  contents ContentSource[]
+  @@index([status, validTo])
+  @@map("T_PLA_D_FUENTE_CONOCIMIENTO")
+}
+model KnowledgeChunk {
+  id String @id @default(uuid()) @db.Uuid @map("PK_FRAGMENTO")
+  sourceId String @db.Uuid @map("FK_FUENTE")
+  source KnowledgeSource @relation(fields: [sourceId], references: [id])
+  section String @map("DES_SECCION")
+  article String @map("COD_ARTICULO")
+  text String @map("TXT_CONTENIDO")
+  metadata Json @default("{}") @map("TXT_METADATOS")
+  @@index([sourceId])
+  @@map("T_PLA_D_FRAGMENTO_CONOCIMIENTO")
+}
+model ContentSource {
+  contentId String @db.Uuid @map("FK_CONTENIDO")
+  sourceId String @db.Uuid @map("FK_FUENTE")
+  content Content @relation(fields: [contentId], references: [id])
+  source KnowledgeSource @relation(fields: [sourceId], references: [id])
+  @@id([contentId, sourceId])
+  @@map("T_PLA_F_CONTENIDO_FUENTE")
+}
+model CaseAttempt {
+  id String @id @default(uuid()) @db.Uuid @map("PK_INTENTO")
+  userId String @db.Uuid @map("FK_USUARIO")
+  user User @relation(fields: [userId], references: [id])
+  contentId String @db.Uuid @map("FK_CONTENIDO")
+  content Content @relation(fields: [contentId], references: [id])
+  status AttemptStatus @default(DRAFT) @map("DES_ESTADO")
+  answer String @default("") @map("TXT_RESPUESTA")
+  answers Json @default("{}") @map("TXT_RESPUESTAS")
+  snapshot Json @map("TXT_SNAPSHOT")
+  evaluation Json? @map("TXT_EVALUACION")
+  score Float? @map("PCT_NOTA")
+  createdAt DateTime @default(now()) @map("TS_CREACION")
+  submittedAt DateTime? @map("TS_ENTREGA")
+  completedAt DateTime? @map("TS_FINALIZACION")
+  @@index([userId, createdAt])
+  @@index([status])
+  @@map("T_PLA_F_INTENTO_SUPUESTO")
+}
+model ExamAttempt {
+  id String @id @default(uuid()) @db.Uuid @map("PK_INTENTO_EXAMEN")
+  userId String @db.Uuid @map("FK_USUARIO")
+  user User @relation(fields: [userId], references: [id])
+  contentId String @db.Uuid @map("FK_CONTENIDO")
+  content Content @relation(fields: [contentId], references: [id])
+  status AttemptStatus @default(DRAFT) @map("DES_ESTADO")
+  snapshot Json @map("TXT_SNAPSHOT")
+  answers Json @default("{}") @map("TXT_RESPUESTAS")
+  seed String @map("COD_SEED")
+  startedAt DateTime @default(now()) @map("TS_INICIO")
+  expiresAt DateTime @map("TS_EXPIRACION")
+  submittedAt DateTime? @map("TS_ENTREGA")
+  result Json? @map("TXT_RESULTADO")
+  score Float? @map("PCT_NOTA")
+  @@index([userId, startedAt])
+  @@index([status, expiresAt])
+  @@map("T_PLA_F_INTENTO_EXAMEN")
+}
+model UserSkillProgress {
+  userId String @db.Uuid @map("FK_USUARIO")
+  user User @relation(fields: [userId], references: [id])
+  skill String @map("COD_HABILIDAD")
+  mastery Float @map("PCT_DOMINIO")
+  sampleCount Int @default(1) @map("NUM_MUESTRAS")
+  lastScore Float @map("PCT_ULTIMO_RESULTADO")
+  updatedAt DateTime @updatedAt @map("TS_ACTUALIZACION")
+  @@id([userId, skill])
+  @@map("T_PLA_F_PROGRESO_HABILIDAD")
+}
+model ErrorBankItem {
+  id String @id @default(uuid()) @db.Uuid @map("PK_ERROR")
+  userId String @db.Uuid @map("FK_USUARIO")
+  user User @relation(fields: [userId], references: [id])
+  concept String @map("COD_CONCEPTO")
+  category String @map("COD_CATEGORIA")
+  originId String @map("COD_ORIGEN")
+  action String @map("DES_ACCION")
+  severity String @map("COD_SEVERIDAD")
+  count Int @default(1) @map("NUM_REPETICIONES")
+  status String @default("ACTIVE") @map("DES_ESTADO")
+  lastAt DateTime @default(now()) @map("TS_ULTIMO_ERROR")
+  nextReview DateTime @map("TS_PROXIMO_REPASO")
+  @@unique([userId, concept])
+  @@index([userId, nextReview, status])
+  @@map("T_PLA_F_ERROR_ESTUDIO")
+}
+model StudySession {
+  id String @id @default(uuid()) @db.Uuid @map("PK_ESTUDIO")
+  userId String @db.Uuid @map("FK_USUARIO")
+  user User @relation(fields: [userId], references: [id])
+  contentId String @db.Uuid @map("FK_CONTENIDO")
+  content Content @relation(fields: [contentId], references: [id])
+  completedAt DateTime @default(now()) @map("TS_FINALIZACION")
+  @@unique([userId, contentId])
+  @@map("T_PLA_F_SESION_ESTUDIO")
+}
+model Favorite {
+  userId String @db.Uuid @map("FK_USUARIO")
+  user User @relation(fields: [userId], references: [id])
+  contentId String @db.Uuid @map("FK_CONTENIDO")
+  content Content @relation(fields: [contentId], references: [id])
+  @@id([userId, contentId])
+  @@map("T_PLA_F_FAVORITO")
+}
+model AiConversation {
+  id String @id @default(uuid()) @db.Uuid @map("PK_CONVERSACION")
+  userId String @db.Uuid @map("FK_USUARIO")
+  user User @relation(fields: [userId], references: [id])
+  mode String @map("COD_MODO")
+  createdAt DateTime @default(now()) @map("TS_CREACION")
+  messages AiMessage[]
+  @@index([userId, createdAt])
+  @@map("T_PLA_F_CONVERSACION_IA")
+}
+model AiMessage {
+  id String @id @default(uuid()) @db.Uuid @map("PK_MENSAJE")
+  conversationId String @db.Uuid @map("FK_CONVERSACION")
+  conversation AiConversation @relation(fields: [conversationId], references: [id])
+  role String @map("COD_ROL")
+  body String @map("TXT_MENSAJE")
+  citations Json @default("[]") @map("TXT_CITAS")
+  createdAt DateTime @default(now()) @map("TS_CREACION")
+  @@index([conversationId, createdAt])
+  @@map("T_PLA_F_MENSAJE_IA")
+}
+model AiUsageRecord {
+  id String @id @default(uuid()) @db.Uuid @map("PK_CONSUMO")
+  userId String @db.Uuid @map("FK_USUARIO")
+  operation String @map("COD_OPERACION")
+  model String @map("COD_MODELO")
+  tokens Int @default(0) @map("NUM_TOKENS")
+  latencyMs Int @map("NUM_LATENCIA")
+  outcome String @map("DES_RESULTADO")
+  createdAt DateTime @default(now()) @map("TS_CREACION")
+  @@index([userId, createdAt])
+  @@map("T_PLA_F_CONSUMO_IA")
+}
+model SupportThread {
+  id String @id @default(uuid()) @db.Uuid @map("PK_HILO")
+  userId String @db.Uuid @map("FK_USUARIO")
+  user User @relation(fields: [userId], references: [id])
+  subject String @map("DES_ASUNTO")
+  category String @map("COD_CATEGORIA")
+  status String @default("PENDING_STAFF") @map("DES_ESTADO")
+  assignedTo String? @db.Uuid @map("FK_RESPONSABLE")
+  createdAt DateTime @default(now()) @map("TS_CREACION")
+  updatedAt DateTime @updatedAt @map("TS_ACTUALIZACION")
+  messages SupportMessage[]
+  notes SupportInternalNote[]
+  @@index([status, updatedAt])
+  @@index([userId, updatedAt])
+  @@map("T_PLA_F_HILO_SOPORTE")
+}
+model SupportMessage {
+  id String @id @default(uuid()) @db.Uuid @map("PK_MENSAJE")
+  threadId String @db.Uuid @map("FK_HILO")
+  thread SupportThread @relation(fields: [threadId], references: [id])
+  senderId String @db.Uuid @map("FK_REMITENTE")
+  staff Boolean @default(false) @map("FLG_EQUIPO")
+  body String @map("TXT_MENSAJE")
+  createdAt DateTime @default(now()) @map("TS_CREACION")
+  @@index([threadId, createdAt])
+  @@map("T_PLA_F_MENSAJE_SOPORTE")
+}
+model SupportInternalNote {
+  id String @id @default(uuid()) @db.Uuid @map("PK_NOTA")
+  threadId String @db.Uuid @map("FK_HILO")
+  thread SupportThread @relation(fields: [threadId], references: [id])
+  actorId String @db.Uuid @map("FK_AUTOR")
+  body String @map("TXT_NOTA")
+  createdAt DateTime @default(now()) @map("TS_CREACION")
+  @@map("T_PLA_F_NOTA_INTERNA_SOPORTE")
+}
+model AdminAuditLog {
+  id String @id @default(uuid()) @db.Uuid @map("PK_AUDITORIA")
+  actorId String @db.Uuid @map("FK_ACTOR")
+  action String @map("COD_ACCION")
+  entityId String @map("COD_ENTIDAD")
+  before Json? @map("TXT_ANTES")
+  after Json? @map("TXT_DESPUES")
+  createdAt DateTime @default(now()) @map("TS_CREACION")
+  @@index([createdAt])
+  @@index([entityId, createdAt])
+  @@map("T_PLA_A_AUDITORIA_ADMIN")
+}

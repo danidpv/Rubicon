@@ -1,0 +1,38 @@
+{
+  "name": "sp-local-ia",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.28.2",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter frontend --filter backend dev",
+    "dev:frontend": "pnpm --filter frontend dev",
+    "dev:backend": "pnpm --filter shared build && pnpm --filter backend dev",
+    "lint": "eslint .",
+    "typecheck": "pnpm -r typecheck",
+    "test": "vitest run",
+    "test:e2e": "node infra/prepare-e2e.mjs && playwright test",
+    "build": "pnpm --filter shared build && pnpm --filter backend build && pnpm --filter frontend build",
+    "validate": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "db:generate": "pnpm --filter backend db:generate",
+    "db:migrate": "pnpm --filter backend db:migrate",
+    "db:seed": "pnpm --filter backend db:seed",
+    "db:studio": "pnpm --filter backend db:studio",
+    "admin:create": "pnpm --filter backend admin:create",
+    "postinstall": "pnpm db:generate && pnpm --filter shared build"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.11.1",
+    "@eslint/js": "9.39.2",
+    "@playwright/test": "1.58.2",
+    "@types/node": "24.10.9",
+    "dotenv": "17.2.3",
+    "eslint": "9.39.2",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.53.0",
+    "vitest": "4.0.17"
+  }
+}
